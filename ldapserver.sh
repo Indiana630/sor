@@ -29,7 +29,7 @@ agregar_grupo() {
 dn: cn=$group_name,ou=Groups,dc=vegasoft,dc=local
 objectClass: posixGroup
 cn: $group_name
-gidNumber: <ID_GID>
+gidNumber: 10000
 EOF
 }
 
