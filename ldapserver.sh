@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Verificar que se esté ejecutando como super usuario
+# Verificar que se esté ejecutando localo super usuario
 if [ "$(id -u)" -ne 0 ]; then
-  echo "Este script debe ser ejecutado como super usuario."
+  echo "Este script debe ser ejecutado localo super usuario."
   exit 1
 fi
 
 # Función para agregar una unidad organizativa (OU)
 agregar_ou() {
   read -p "Nombre de la nueva OU: " ou_name
-  ldapadd -x -D "cn=admin,dc=example,dc=com" -W <<EOF
-dn: ou=$ou_name,dc=example,dc=com
+  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
+dn: ou=$ou_name,dc=vegasoft,dc=local
 objectClass: organizationalUnit
 ou: $ou_name
 EOF
@@ -19,14 +19,14 @@ EOF
 # Función para eliminar una unidad organizativa (OU)
 eliminar_ou() {
   read -p "Nombre de la OU a eliminar: " ou_name
-  ldapdelete -x -D "cn=admin,dc=example,dc=com" -W "ou=$ou_name,dc=example,dc=com"
+  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "ou=$ou_name,dc=vegasoft,dc=local"
 }
 
 # Función para agregar un grupo
 agregar_grupo() {
   read -p "Nombre del nuevo grupo: " group_name
-  ldapadd -x -D "cn=admin,dc=example,dc=com" -W <<EOF
-dn: cn=$group_name,ou=Groups,dc=example,dc=com
+  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
+dn: cn=$group_name,ou=Groups,dc=vegasoft,dc=local
 objectClass: posixGroup
 cn: $group_name
 gidNumber: <ID_GID>
@@ -36,7 +36,7 @@ EOF
 # Función para eliminar un grupo
 eliminar_grupo() {
   read -p "Nombre del grupo a eliminar: " group_name
-  ldapdelete -x -D "cn=admin,dc=example,dc=com" -W "cn=$group_name,ou=Groups,dc=example,dc=com"
+  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "cn=$group_name,ou=Groups,dc=vegasoft,dc=local"
 }
 
 # Función para agregar un usuario
@@ -52,8 +52,8 @@ agregar_usuario() {
     mobile_flag=""
   fi
 
-  ldapadd -x -D "cn=admin,dc=example,dc=com" -W <<EOF
-dn: uid=$username,ou=Users,dc=example,dc=com
+  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
+dn: uid=$username,ou=Users,dc=vegasoft,dc=local
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
@@ -72,7 +72,7 @@ EOF
 # Función para eliminar un usuario
 eliminar_usuario() {
   read -p "Nombre del usuario a eliminar: " username
-  ldapdelete -x -D "cn=admin,dc=example,dc=com" -W "uid=$username,ou=Users,dc=example,dc=com"
+  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "uid=$username,ou=Users,dc=vegasoft,dc=local"
 }
 
 # Función para editar un usuario
@@ -81,8 +81,8 @@ editar_usuario() {
   read -p "Nuevo UID (dejar en blanco para no cambiar): " new_uid
   read -p "Nueva contraseña (dejar en blanco para no cambiar): " new_password
 
-  ldapmodify -x -D "cn=admin,dc=example,dc=com" -W <<EOF
-dn: uid=$username,ou=Users,dc=example,dc=com
+  ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
+dn: uid=$username,ou=Users,dc=vegasoft,dc=local
 replace: uidNumber
 uidNumber: $new_uid
 
