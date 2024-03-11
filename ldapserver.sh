@@ -1,121 +1,161 @@
 #!/bin/bash
 
-# Verificar que se esté ejecutando localo super usuario
-if [ "$(id -u)" -ne 0 ]; then
-  echo "Este script debe ser ejecutado localo super usuario."
-  exit 1
-fi
-
-# Función para agregar una unidad organizativa (OU)
-agregar_ou() {
-  read -p "Nombre de la nueva OU: " ou_name
-  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
-dn: ou=$ou_name,dc=vegasoft,dc=local
-objectClass: organizationalUnit
-ou: $ou_name
-EOF
+# Función para mostrar el menú principal
+mostrar_menu() {
+    clear
+    echo "===== MENU LDAP Y NFS ====="
+    echo "1. Crear Usuario"
+    echo "2. Borrar Usuario"
+    echo "3. Modificar Usuario"
+    echo "4. Crear Grupo"
+    echo "5. Borrar Grupo"
+    echo "6. Modificar Grupo"
+    echo "7. Crear Unidad NFS para Usuario Móvil"
+    echo "8. Salir"
+    echo "============================"
 }
 
-# Función para eliminar una unidad organizativa (OU)
-eliminar_ou() {
-  read -p "Nombre de la OU a eliminar: " ou_name
-  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "ou=$ou_name,dc=vegasoft,dc=local"
-}
+# Función para crear un usuario en LDAP
+crear_usuario() {
+    read -p "Nombre de usuario: " username
+    read -s -p "Contraseña: " password
+    echo
+    read -p "Email: " email
+    read -p "Directorio: " directory
+    # Otros parámetros que desees configurar
 
-# Función para agregar un grupo
-agregar_grupo() {
-  read -p "Nombre del nuevo grupo: " group_name
-  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
-dn: cn=$group_name,ou=Groups,dc=vegasoft,dc=local
-objectClass: posixGroup
-cn: $group_name
-gidNumber: 10000
-EOF
-}
+    # Generar hash de la contraseña
+    password_hash=$(slappasswd -s "$password")
 
-# Función para eliminar un grupo
-eliminar_grupo() {
-  read -p "Nombre del grupo a eliminar: " group_name
-  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "cn=$group_name,ou=Groups,dc=vegasoft,dc=local"
-}
-
-# Función para agregar un usuario
-agregar_usuario() {
-  read -p "Nombre del nuevo usuario: " username
-  read -p "UID del nuevo usuario: " uid
-  read -p "Contraseña del nuevo usuario: " password
-
-  read -p "¿Desea que el usuario sea móvil? (s/n): " mobile_option
-  if [ "$mobile_option" == "s" ]; then
-    mobile_flag="mobile"
-  else
-    mobile_flag=""
-  fi
-
-  ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
-dn: uid=$username,ou=Users,dc=vegasoft,dc=local
+    # Crear archivo LDIF para el usuario
+    cat <<EOF > /tmp/usuario.ldif
+dn: uid=$username,ou=usuarios,dc=vegasoft,dc=local
 objectClass: inetOrgPerson
 objectClass: posixAccount
-objectClass: shadowAccount
+uid: $username
 cn: $username
 sn: $username
-uid: $username
-uidNumber: $uid
-gidNumber: <PRIMARY_GROUP_ID>
-userPassword: $password
-homeDirectory: /home/$username
-loginShell: /bin/bash
-$mobile_flag: true
+userPassword: $password_hash
+mail: $email
+homeDirectory: $directory
+# Otros atributos LDAP que desees configurar
 EOF
+
+    # Agregar usuario al LDAP
+    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/usuario.ldif
+
+    echo "Usuario creado exitosamente."
 }
 
-# Función para eliminar un usuario
-eliminar_usuario() {
-  read -p "Nombre del usuario a eliminar: " username
-  ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -W "uid=$username,ou=Users,dc=vegasoft,dc=local"
+# Función para borrar un usuario en LDAP
+borrar_usuario() {
+    read -p "Nombre de usuario a borrar: " username
+
+    # Eliminar usuario del LDAP
+    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "uid=$username,ou=usuarios,dc=vegasoft,dc=local"
+
+    echo "Usuario borrado exitosamente."
 }
 
-# Función para editar un usuario
-editar_usuario() {
-  read -p "Nombre de usuario a editar: " username
-  read -p "Nuevo UID (dejar en blanco para no cambiar): " new_uid
-  read -p "Nueva contraseña (dejar en blanco para no cambiar): " new_password
+# Función para modificar un usuario en LDAP
+modificar_usuario() {
+    read -p "Nombre de usuario a modificar: " username
 
-  ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -W <<EOF
-dn: uid=$username,ou=Users,dc=vegasoft,dc=local
-replace: uidNumber
-uidNumber: $new_uid
+    # Pedir los nuevos valores
+    read -p "Nuevo email: " new_email
+    read -p "Nuevo directorio: " new_directory
+    # Otros parámetros que desees modificar
 
-replace: userPassword
-userPassword: $new_password
+    # Modificar usuario en LDAP
+    ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" <<EOF
+dn: uid=$username,ou=usuarios,dc=vegasoft,dc=local
+changetype: modify
+replace: mail
+mail: $new_email
+replace: homeDirectory
+homeDirectory: $new_directory
+# Otros atributos que desees modificar
 EOF
+
+    echo "Usuario modificado exitosamente."
 }
 
-# Menú principal
+# Función para crear un grupo en LDAP
+crear_grupo() {
+    read -p "Nombre del grupo: " groupname
+
+    # Crear archivo LDIF para el grupo
+    cat <<EOF > /tmp/grupo.ldif
+dn: cn=$groupname,ou=grupos,dc=vegasoft,dc=local
+objectClass: posixGroup
+cn: $groupname
+gidNumber: $(shuf -i 2000-9999 -n 1)
+EOF
+
+    # Agregar grupo al LDAP
+    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
+
+    echo "Grupo creado exitosamente."
+}
+
+# Función para borrar un grupo en LDAP
+borrar_grupo() {
+    read -p "Nombre del grupo a borrar: " groupname
+
+    # Eliminar grupo del LDAP
+    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "cn=$groupname,ou=grupos,dc=vegasoft,dc=local"
+
+    echo "Grupo borrado exitosamente."
+}
+
+# Función para modificar un grupo en LDAP
+modificar_grupo() {
+    read -p "Nombre del grupo a modificar: " groupname
+
+    # Pedir los nuevos valores
+    read -p "Nuevo GID: " new_gid
+    # Otros parámetros que desees modificar
+
+    # Modificar grupo en LDAP
+    ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" <<EOF
+dn: cn=$groupname,ou=grupos,dc=vegasoft,dc=local
+changetype: modify
+replace: gidNumber
+gidNumber: $new_gid
+# Otros atributos que desees modificar
+EOF
+
+    echo "Grupo modificado exitosamente."
+}
+
+# Función para crear una unidad NFS para usuario móvil
+crear_unidad_nfs() {
+    read -p "Nombre de usuario móvil: " username
+
+    # Crear directorio para el usuario móvil
+    mkdir -p "/root/perfilesmoviles/$username"
+    chown -R nobody:nogroup "/root/perfilesmoviles/$username"
+    chmod -R 777 "/root/perfilesmoviles/$username"
+
+    echo "Unidad NFS para usuario móvil creada exitosamente."
+}
+
+# Bucle principal del script
 while true; do
-  echo "-----------------------------------"
-  echo "           MENÚ PRINCIPAL           "
-  echo "-----------------------------------"
-  echo "1. Agregar Unidad Organizativa (OU)"
-  echo "2. Eliminar Unidad Organizativa (OU)"
-  echo "3. Agregar Grupo"
-  echo "4. Eliminar Grupo"
-  echo "5. Agregar Usuario"
-  echo "6. Eliminar Usuario"
-  echo "7. Editar Usuario"
-  echo "8. Salir"
-  echo "-----------------------------------"
-  read -p "Ingrese el número de la opción deseada: " opcion
+    mostrar_menu
+    read -p "Seleccione una opción: " opcion
 
-  case $opcion in
-    1) agregar_ou ;;
-    2) eliminar_ou ;;
-    3) agregar_grupo ;;
-    4) eliminar_grupo ;;
-    5) agregar_usuario ;;
-    6) eliminar_usuario ;;
-    7) editar_usuario ;;
-    8) echo "Saliendo del script."; exit 0 ;;
-    *) echo "Opción inválida. Por favor, ingrese un número del 1 al 8." ;;
-  esac
+    case $opcion in
+        1) crear_usuario ;;
+        2) borrar_usuario ;;
+        3) modificar_usuario ;;
+        4) crear_grupo ;;
+        5) borrar_grupo ;;
+        6) modificar_grupo ;;
+        7) crear_unidad_nfs ;;
+        8) exit ;;
+        *) echo "Opción inválida. Intente de nuevo." ;;
+    esac
+
+    read -p "Presione Enter para continuar..."
 done
