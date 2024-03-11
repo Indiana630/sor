@@ -1,4 +1,9 @@
-dn: uid=usuario,ou=unidad,dc=vegasoft,dc=local
+dn: uid=ceo,ou=personal,ou=control,dc=vegasoft,dc=local
 changetype: modify
 replace: homeDirectory
-homeDirectory: /moviles/usuario
+homeDirectory: /movilControl/ceo
+
+dn: uid=miguelhm,ou=contabilidad,ou=control,dc=vegasoft,dc=local
+changetype: modify
+replace: homeDirectory
+homeDirectory: /movilControl/miguelhm
