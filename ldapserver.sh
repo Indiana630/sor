@@ -75,19 +75,22 @@ EOF
 
     echo "Usuario modificado exitosamente."
 }
-
 crear_grupo() {
     read -p "Nombre del grupo: " groupname
+    read -p "GID Number: " gid_number
 
     # Crear archivo LDIF para el grupo
     cat <<EOF > /tmp/grupo.ldif
-dn: cn=$groupname,ou=grupos,dc=vegasoft,dc=local
+dn: cn=$groupname,ou=unidad,dc=somebooks,dc=local
+objectClass: top
 objectClass: posixGroup
+gidNumber: $gid_number
 cn: $groupname
-gidNumber: $(shuf -i 2000-9999 -n 1)
+# Otros atributos LDAP que desees configurar
 EOF
 
-    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
+    # Agregar grupo al LDAP
+    ldapadd -x -D "cn=admin,dc=somebooks,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
 
     echo "Grupo creado exitosamente."
 }
