@@ -11,7 +11,8 @@ mostrar_menu() {
     echo "5. Borrar Grupo"
     echo "6. Modificar Grupo"
     echo "7. Crear Unidad NFS para Usuario Móvil"
-    echo "8. Salir"
+    echo "8. Instalar y Configurar LDAP Account Manager (LAM)"
+    echo "9. Salir"
     echo "============================"
 }
 
@@ -140,6 +141,22 @@ crear_unidad_nfs() {
     echo "Unidad NFS para usuario móvil creada exitosamente."
 }
 
+# Función para instalar y configurar LDAP Account Manager (LAM)
+instalar_configurar_lam() {
+    # Instalar LDAP Account Manager
+    apt-get update
+    apt-get install -y ldap-account-manager
+
+    # Configurar LAM
+    sed -i 's|ldap://localhost|ldaps://localhost|g' /etc/ldap-account-manager/config.cfg
+    sed -i 's|sizelimit \= 200|sizelimit \= 1000|g' /etc/ldap-account-manager/config.cfg
+
+    # Reiniciar servicio Apache
+    systemctl restart apache2
+
+    echo "LDAP Account Manager (LAM) instalado y configurado."
+}
+
 # Bucle principal del script
 while true; do
     mostrar_menu
@@ -153,7 +170,8 @@ while true; do
         5) borrar_grupo ;;
         6) modificar_grupo ;;
         7) crear_unidad_nfs ;;
-        8) exit ;;
+        8) instalar_configurar_lam ;;
+        9) exit ;;
         *) echo "Opción inválida. Intente de nuevo." ;;
     esac
 
