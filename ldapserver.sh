@@ -32,7 +32,7 @@ crear_usuario() {
 
     # Crear archivo LDIF para el usuario
     cat <<EOF > /tmp/usuario.ldif
-dn: uid=$username,ou=unidad,dc=somebooks,dc=local
+dn: uid=$username,ou=unidad,dc=vegasoft,dc=local
 objectClass: top
 objectClass: posixAccount
 objectClass: inetOrgPerson
@@ -51,7 +51,7 @@ givenName: $(echo $full_name | awk '{print $1}')
 EOF
 
 
-    ldapadd -x -D "cn=admin,dc=somebooks,dc=local" -w "P@ssw0rd" -f /tmp/usuario.ldif
+    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/usuario.ldif
 
     echo "Usuario creado exitosamente."
 }
@@ -91,7 +91,7 @@ crear_grupo() {
 
     # Crear archivo LDIF para el grupo
     cat <<EOF > /tmp/grupo.ldif
-dn: cn=$groupname,ou=unidad,dc=somebooks,dc=local
+dn: cn=$groupname,ou=unidad,dc=vegasoft,dc=local
 objectClass: top
 objectClass: posixGroup
 gidNumber: $gid_number
@@ -100,7 +100,7 @@ cn: $groupname
 EOF
 
     # Agregar grupo al LDAP
-    ldapadd -x -D "cn=admin,dc=somebooks,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
+    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
 
     echo "Grupo creado exitosamente."
 }
