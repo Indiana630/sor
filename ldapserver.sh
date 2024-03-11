@@ -29,7 +29,7 @@ crear_usuario() {
 
     # Crear archivo LDIF para el usuario
     cat <<EOF > /tmp/usuario.ldif
-dn: uid=$username,ou=usuarios,dc=vegasoft,dc=local
+dn: uid=$username,ou=unidad,dc=vegasoft,dc=local
 objectClass: inetOrgPerson
 objectClass: posixAccount
 uid: $username
@@ -52,7 +52,7 @@ borrar_usuario() {
     read -p "Nombre de usuario a borrar: " username
 
     # Eliminar usuario del LDAP
-    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "uid=$username,ou=usuarios,dc=vegasoft,dc=local"
+    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "uid=$username,ou=unidad,dc=vegasoft,dc=local"
 
     echo "Usuario borrado exitosamente."
 }
@@ -68,7 +68,7 @@ modificar_usuario() {
 
     # Modificar usuario en LDAP
     ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" <<EOF
-dn: uid=$username,ou=usuarios,dc=vegasoft,dc=local
+dn: uid=$username,ou=unidad,dc=vegasoft,dc=local
 changetype: modify
 replace: mail
 mail: $new_email
