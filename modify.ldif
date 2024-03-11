@@ -1,0 +1,4 @@
+dn: uid=usuario,ou=unidad,dc=vegasoft,dc=local
+changetype: modify
+replace: homeDirectory
+homeDirectory: /moviles/usuario
