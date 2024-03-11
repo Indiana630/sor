@@ -56,6 +56,16 @@ EOF
     echo "Usuario creado exitosamente."
 }
 
+borrar_usuario() {
+    read -p "Nombre de usuario a borrar: " username
+
+    # Eliminar usuario del LDAP
+    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "uid=$username,ou=usuarios,dc=vegasoft,dc=local"
+
+    echo "Usuario borrado exitosamente."
+}
+
+
 modificar_usuario() {
     read -p "Nombre de usuario a modificar: " username
 
