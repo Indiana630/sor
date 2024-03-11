@@ -16,58 +16,53 @@ mostrar_menu() {
     echo "============================"
 }
 
-# Función para crear un usuario en LDAP
 crear_usuario() {
     read -p "Nombre de usuario: " username
     read -s -p "Contraseña: " password
     echo
-    read -p "Email: " email
-    read -p "Directorio: " directory
-    # Otros parámetros que desees configurar
+    read -p "Correo electrónico: " email
+    read -p "Nombre completo: " full_name
+    read -p "UID Number: " uid_number
+    read -p "GID Number: " gid_number
+    read -p "Directorio de inicio: " home_directory
+    read -p "Shell de inicio de sesión: " login_shell
 
     # Generar hash de la contraseña
     password_hash=$(slappasswd -s "$password")
 
     # Crear archivo LDIF para el usuario
     cat <<EOF > /tmp/usuario.ldif
-dn: uid=$username,ou=unidad,dc=vegasoft,dc=local
-objectClass: inetOrgPerson
+dn: uid=$username,ou=unidad,dc=somebooks,dc=local
+objectClass: top
 objectClass: posixAccount
-uid: $username
+objectClass: inetOrgPerson
+objectClass: person
 cn: $username
-sn: $username
+uid: $username
+ou: grupo
+uidNumber: $uid_number
+gidNumber: $gid_number
+homeDirectory: $home_directory
+loginShell: $login_shell
 userPassword: $password_hash
+sn: $(echo $full_name | awk '{print $NF}')
 mail: $email
-homeDirectory: $directory
-# Otros atributos LDAP que desees configurar
+givenName: $(echo $full_name | awk '{print $1}')
 EOF
 
-    # Agregar usuario al LDAP
-    ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/usuario.ldif
+
+    ldapadd -x -D "cn=admin,dc=somebooks,dc=local" -w "P@ssw0rd" -f /tmp/usuario.ldif
 
     echo "Usuario creado exitosamente."
 }
 
-# Función para borrar un usuario en LDAP
-borrar_usuario() {
-    read -p "Nombre de usuario a borrar: " username
-
-    # Eliminar usuario del LDAP
-    ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "uid=$username,ou=unidad,dc=vegasoft,dc=local"
-
-    echo "Usuario borrado exitosamente."
-}
-
-# Función para modificar un usuario en LDAP
 modificar_usuario() {
     read -p "Nombre de usuario a modificar: " username
 
     # Pedir los nuevos valores
     read -p "Nuevo email: " new_email
     read -p "Nuevo directorio: " new_directory
-    # Otros parámetros que desees modificar
 
-    # Modificar usuario en LDAP
     ldapmodify -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" <<EOF
 dn: uid=$username,ou=unidad,dc=vegasoft,dc=local
 changetype: modify
@@ -81,7 +76,6 @@ EOF
     echo "Usuario modificado exitosamente."
 }
 
-# Función para crear un grupo en LDAP
 crear_grupo() {
     read -p "Nombre del grupo: " groupname
 
@@ -93,17 +87,13 @@ cn: $groupname
 gidNumber: $(shuf -i 2000-9999 -n 1)
 EOF
 
-    # Agregar grupo al LDAP
     ldapadd -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" -f /tmp/grupo.ldif
 
     echo "Grupo creado exitosamente."
 }
 
-# Función para borrar un grupo en LDAP
 borrar_grupo() {
     read -p "Nombre del grupo a borrar: " groupname
-
-    # Eliminar grupo del LDAP
     ldapdelete -x -D "cn=admin,dc=vegasoft,dc=local" -w "P@ssw0rd" "cn=$groupname,ou=grupos,dc=vegasoft,dc=local"
 
     echo "Grupo borrado exitosamente."
@@ -157,7 +147,6 @@ instalar_configurar_lam() {
     echo "LDAP Account Manager (LAM) instalado y configurado."
 }
 
-# Bucle principal del script
 while true; do
     mostrar_menu
     read -p "Seleccione una opción: " opcion
